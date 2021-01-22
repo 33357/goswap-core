@@ -1,0 +1,3499 @@
+{
+  "contractName": "IDistributor",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "distribute",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "metadata": "{\"compiler\":{\"version\":\"0.6.12+commit.27d51765\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"distribute\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"/home/cui/Documents/goswap/goswap-core/contracts/distribution/InitialGOTDistributor.sol\":\"IDistributor\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"/home/cui/Documents/goswap/goswap-core/contracts/distribution/InitialGOTDistributor.sol\":{\"keccak256\":\"0xf931ee7f1ea5e8b8752a6b80a2565ea065cac79685ebe944056e2e2f96e4d39a\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://f2fbd702dba1ddab892e5ac5131d9991752a488be2a677e62ab5c9b7c84df457\",\"dweb:/ipfs/QmZJkH5TY3x29tvzP9HikhwF2dev5JYQzPLtgfGqrgCkaf\"]},\"/home/cui/Documents/goswap/goswap-core/contracts/interfaces/IRewardDistributionRecipient.sol\":{\"keccak256\":\"0xb38a4a0193b1a02b7fa72eb663625a37acfb2edf73dccd2acc36d23f5e98331a\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://c39eeb52e33deeb97f64e80cbb8f457e69c90f6436e56a1dd20dc8b73ca1264e\",\"dweb:/ipfs/QmZzFWAbTj3si9P4JXAvUUayCvrs9t3wbkd5fNbSiH9ER1\"]},\"@openzeppelin/contracts/GSN/Context.sol\":{\"keccak256\":\"0xdb26cbf4d028490f49831a7865c2fe1b28db44b535ca8d343785a3b768aae183\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://840b14ce0315c47d49ba328f1f9fa7654ded1c9e1559e6c5e777a7b2dc28bf0a\",\"dweb:/ipfs/QmTLLabn4wcfGro9LEmUXUN2nwKqZSotXMvjDCLXEnLtZP\"]},\"@openzeppelin/contracts/access/Ownable.sol\":{\"keccak256\":\"0x4bd6402ca6b3419008c2b482aff54e66836e8cb4eba2680e42ac5884ae6424fc\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://8f9f711fb8d0d92aeea1c327e3845d13ca1fa8f142e47f8723cd5b3106fb29a3\",\"dweb:/ipfs/QmVQUReDW9f4zGqhizwHnyU8EntMs95tbASdqkGncnikba\"]},\"@openzeppelin/contracts/math/SafeMath.sol\":{\"keccak256\":\"0x9a9cf02622cd7a64261b10534fc3260449da25c98c9e96d1b4ae8110a20e5806\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://2df142592d1dc267d9549049ee3317fa190d2f87eaa565f86ab05ec83f7ab8f5\",\"dweb:/ipfs/QmSkJtcfWo7c42KnL5hho6GFxK6HRNV91XABx1P7xDtfLV\"]},\"@openzeppelin/contracts/token/ERC20/IERC20.sol\":{\"keccak256\":\"0x5c26b39d26f7ed489e555d955dcd3e01872972e71fdd1528e93ec164e4f23385\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://efdc632af6960cf865dbc113665ea1f5b90eab75cc40ec062b2f6ae6da582017\",\"dweb:/ipfs/QmfAZFDuG62vxmAN9DnXApv7e7PMzPqi4RkqqZHLMSQiY5\"]}},\"version\":1}",
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "immutableReferences": {},
+  "sourceMap": "",
+  "deployedSourceMap": "",
+  "source": "// SPDX-License-Identifier: MIT\npragma solidity ^0.6.0;\n\nimport '@openzeppelin/contracts/math/SafeMath.sol';\nimport '@openzeppelin/contracts/token/ERC20/IERC20.sol';\n\nimport '../interfaces/IRewardDistributionRecipient.sol';\n\ninterface IDistributor {\n    function distribute() external;\n}\n\ncontract InitialGOTDistributor is IDistributor {\n    using SafeMath for uint256;\n\n    event Distributed(address pool, uint256 cashAmount);\n    /// @notice 只能运行一次\n    bool public once = true;\n\n    /// @notice GOT地址\n    IERC20 public GOT;\n    /// @notice HUSDGOCLPPool 矿池地址\n    IRewardDistributionRecipient public HUSDGOCLPPool;\n    /// @notice HUSDGOC 初始奖励\n    uint256 public HUSDGOCInitialBalance;\n    /// @notice HUSDGOTLPPool 矿池地址\n    IRewardDistributionRecipient public HUSDGOTLPPool;\n    /// @notice HUSDGOT 初始奖励\n    uint256 public HUSDGOTInitialBalance;\n\n    /**\n    * @dev 构造函数\n    * @param _GOT GOT地址\n    * @param _HUSDGOCLPPool HUSDGOCLPPool 矿池地址\n    * @param _HUSDGOCInitialBalance HUSDGOC 初始奖励\n    * @param _HUSDGOTLPPool HUSDGOTLPPool 矿池地址\n    * @param _HUSDGOTInitialBalance HUSDGOT 初始奖励\n     */\n    constructor(\n        IERC20 _GOT,\n        IRewardDistributionRecipient _HUSDGOCLPPool,\n        uint256 _HUSDGOCInitialBalance,\n        IRewardDistributionRecipient _HUSDGOTLPPool,\n        uint256 _HUSDGOTInitialBalance\n    ) public {\n        GOT = _GOT;\n        HUSDGOCLPPool = _HUSDGOCLPPool;\n        HUSDGOCInitialBalance = _HUSDGOCInitialBalance;\n        HUSDGOTLPPool = _HUSDGOTLPPool;\n        HUSDGOTInitialBalance = _HUSDGOTInitialBalance;\n    }\n\n    /**\n    * @dev 分发奖励\n     */\n    function distribute() public override {\n        require(\n            once,\n            'InitialGOTDistributor: you cannot run this function twice'\n        );\n        // 将奖励的GOT发送给HUSDGOCLPPool 矿池地址\n        GOT.transfer(address(HUSDGOCLPPool), HUSDGOCInitialBalance);\n        // 通知奖励\n        HUSDGOCLPPool.notifyRewardAmount(HUSDGOCInitialBalance);\n        // 触发分发事件\n        emit Distributed(address(HUSDGOCLPPool), HUSDGOCInitialBalance);\n\n        // 将奖励的GOT发送给HUSDGOTLPPool 矿池地址\n        GOT.transfer(address(HUSDGOTLPPool), HUSDGOTInitialBalance);\n        // 通知奖励\n        HUSDGOTLPPool.notifyRewardAmount(HUSDGOTInitialBalance);\n        // 触发分发事件\n        emit Distributed(address(HUSDGOTLPPool), HUSDGOTInitialBalance);\n\n        once = false;\n    }\n}\n",
+  "sourcePath": "/home/cui/Documents/goswap/goswap-core/contracts/distribution/InitialGOTDistributor.sol",
+  "ast": {
+    "absolutePath": "/home/cui/Documents/goswap/goswap-core/contracts/distribution/InitialGOTDistributor.sol",
+    "exportedSymbols": {
+      "IDistributor": [
+        16055
+      ],
+      "InitialGOTDistributor": [
+        16184
+      ]
+    },
+    "id": 16185,
+    "license": "MIT",
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 16048,
+        "literals": [
+          "solidity",
+          "^",
+          "0.6",
+          ".0"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "32:23:25"
+      },
+      {
+        "absolutePath": "@openzeppelin/contracts/math/SafeMath.sol",
+        "file": "@openzeppelin/contracts/math/SafeMath.sol",
+        "id": 16049,
+        "nodeType": "ImportDirective",
+        "scope": 16185,
+        "sourceUnit": 19746,
+        "src": "57:51:25",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "absolutePath": "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "file": "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "id": 16050,
+        "nodeType": "ImportDirective",
+        "scope": 16185,
+        "sourceUnit": 20387,
+        "src": "109:56:25",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "absolutePath": "/home/cui/Documents/goswap/goswap-core/contracts/interfaces/IRewardDistributionRecipient.sol",
+        "file": "../interfaces/IRewardDistributionRecipient.sol",
+        "id": 16051,
+        "nodeType": "ImportDirective",
+        "scope": 16185,
+        "sourceUnit": 17368,
+        "src": "167:56:25",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "abstract": false,
+        "baseContracts": [],
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "documentation": null,
+        "fullyImplemented": false,
+        "id": 16055,
+        "linearizedBaseContracts": [
+          16055
+        ],
+        "name": "IDistributor",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "body": null,
+            "documentation": null,
+            "functionSelector": "e4fc6b6d",
+            "id": 16054,
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "distribute",
+            "nodeType": "FunctionDefinition",
+            "overrides": null,
+            "parameters": {
+              "id": 16052,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "273:2:25"
+            },
+            "returnParameters": {
+              "id": 16053,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "284:0:25"
+            },
+            "scope": 16055,
+            "src": "254:31:25",
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "scope": 16185,
+        "src": "225:62:25"
+      },
+      {
+        "abstract": false,
+        "baseContracts": [
+          {
+            "arguments": null,
+            "baseName": {
+              "contractScope": null,
+              "id": 16056,
+              "name": "IDistributor",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 16055,
+              "src": "323:12:25",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_IDistributor_$16055",
+                "typeString": "contract IDistributor"
+              }
+            },
+            "id": 16057,
+            "nodeType": "InheritanceSpecifier",
+            "src": "323:12:25"
+          }
+        ],
+        "contractDependencies": [
+          16055
+        ],
+        "contractKind": "contract",
+        "documentation": null,
+        "fullyImplemented": true,
+        "id": 16184,
+        "linearizedBaseContracts": [
+          16184,
+          16055
+        ],
+        "name": "InitialGOTDistributor",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "id": 16060,
+            "libraryName": {
+              "contractScope": null,
+              "id": 16058,
+              "name": "SafeMath",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 19745,
+              "src": "348:8:25",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_SafeMath_$19745",
+                "typeString": "library SafeMath"
+              }
+            },
+            "nodeType": "UsingForDirective",
+            "src": "342:27:25",
+            "typeName": {
+              "id": 16059,
+              "name": "uint256",
+              "nodeType": "ElementaryTypeName",
+              "src": "361:7:25",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          },
+          {
+            "anonymous": false,
+            "documentation": null,
+            "id": 16066,
+            "name": "Distributed",
+            "nodeType": "EventDefinition",
+            "parameters": {
+              "id": 16065,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 16062,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "pool",
+                  "nodeType": "VariableDeclaration",
+                  "overrides": null,
+                  "scope": 16066,
+                  "src": "393:12:25",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 16061,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "393:7:25",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 16064,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "cashAmount",
+                  "nodeType": "VariableDeclaration",
+                  "overrides": null,
+                  "scope": 16066,
+                  "src": "407:18:25",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 16063,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "407:7:25",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "392:34:25"
+            },
+            "src": "375:52:25"
+          },
+          {
+            "constant": false,
+            "documentation": {
+              "id": 16067,
+              "nodeType": "StructuredDocumentation",
+              "src": "432:30:25",
+              "text": "@notice 只能运行一次"
+            },
+            "functionSelector": "292a3f7e",
+            "id": 16070,
+            "mutability": "mutable",
+            "name": "once",
+            "nodeType": "VariableDeclaration",
+            "overrides": null,
+            "scope": 16184,
+            "src": "467:23:25",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_bool",
+              "typeString": "bool"
+            },
+            "typeName": {
+              "id": 16068,
+              "name": "bool",
+              "nodeType": "ElementaryTypeName",
+              "src": "467:4:25",
+              "typeDescriptions": {
+                "typeIdentifier": "t_bool",
+                "typeString": "bool"
+              }
+            },
+            "value": {
+              "argumentTypes": null,
+              "hexValue": "74727565",
+              "id": 16069,
+              "isConstant": false,
+              "isLValue": false,
+              "isPure": true,
+              "kind": "bool",
+              "lValueRequested": false,
+              "nodeType": "Literal",
+              "src": "486:4:25",
+              "subdenomination": null,
+              "typeDescriptions": {
+                "typeIdentifier": "t_bool",
+                "typeString": "bool"
+              },
+              "value": "true"
+            },
+            "visibility": "public"
+          },
+          {
+            "constant": false,
+            "documentation": {
+              "id": 16071,
+              "nodeType": "StructuredDocumentation",
+              "src": "497:21:25",
+              "text": "@notice GOT地址"
+            },
+            "functionSelector": "c4dd5cef",
+            "id": 16073,
+            "mutability": "mutable",
+            "name": "GOT",
+            "nodeType": "VariableDeclaration",
+            "overrides": null,
+            "scope": 16184,
+            "src": "523:17:25",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_contract$_IERC20_$20386",
+              "typeString": "contract IERC20"
+            },
+            "typeName": {
+              "contractScope": null,
+              "id": 16072,
+              "name": "IERC20",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 20386,
+              "src": "523:6:25",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_IERC20_$20386",
+                "typeString": "contract IERC20"
+              }
+            },
+            "value": null,
+            "visibility": "public"
+          },
+          {
+            "constant": false,
+            "documentation": {
+              "id": 16074,
+              "nodeType": "StructuredDocumentation",
+              "src": "546:38:25",
+              "text": "@notice HUSDGOCLPPool 矿池地址"
+            },
+            "functionSelector": "e041e36b",
+            "id": 16076,
+            "mutability": "mutable",
+            "name": "HUSDGOCLPPool",
+            "nodeType": "VariableDeclaration",
+            "overrides": null,
+            "scope": 16184,
+            "src": "589:49:25",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+              "typeString": "contract IRewardDistributionRecipient"
+            },
+            "typeName": {
+              "contractScope": null,
+              "id": 16075,
+              "name": "IRewardDistributionRecipient",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 17367,
+              "src": "589:28:25",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                "typeString": "contract IRewardDistributionRecipient"
+              }
+            },
+            "value": null,
+            "visibility": "public"
+          },
+          {
+            "constant": false,
+            "documentation": {
+              "id": 16077,
+              "nodeType": "StructuredDocumentation",
+              "src": "644:32:25",
+              "text": "@notice HUSDGOC 初始奖励"
+            },
+            "functionSelector": "5489003c",
+            "id": 16079,
+            "mutability": "mutable",
+            "name": "HUSDGOCInitialBalance",
+            "nodeType": "VariableDeclaration",
+            "overrides": null,
+            "scope": 16184,
+            "src": "681:36:25",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_uint256",
+              "typeString": "uint256"
+            },
+            "typeName": {
+              "id": 16078,
+              "name": "uint256",
+              "nodeType": "ElementaryTypeName",
+              "src": "681:7:25",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            },
+            "value": null,
+            "visibility": "public"
+          },
+          {
+            "constant": false,
+            "documentation": {
+              "id": 16080,
+              "nodeType": "StructuredDocumentation",
+              "src": "723:38:25",
+              "text": "@notice HUSDGOTLPPool 矿池地址"
+            },
+            "functionSelector": "43d42ccd",
+            "id": 16082,
+            "mutability": "mutable",
+            "name": "HUSDGOTLPPool",
+            "nodeType": "VariableDeclaration",
+            "overrides": null,
+            "scope": 16184,
+            "src": "766:49:25",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+              "typeString": "contract IRewardDistributionRecipient"
+            },
+            "typeName": {
+              "contractScope": null,
+              "id": 16081,
+              "name": "IRewardDistributionRecipient",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 17367,
+              "src": "766:28:25",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                "typeString": "contract IRewardDistributionRecipient"
+              }
+            },
+            "value": null,
+            "visibility": "public"
+          },
+          {
+            "constant": false,
+            "documentation": {
+              "id": 16083,
+              "nodeType": "StructuredDocumentation",
+              "src": "821:32:25",
+              "text": "@notice HUSDGOT 初始奖励"
+            },
+            "functionSelector": "d5204d5c",
+            "id": 16085,
+            "mutability": "mutable",
+            "name": "HUSDGOTInitialBalance",
+            "nodeType": "VariableDeclaration",
+            "overrides": null,
+            "scope": 16184,
+            "src": "858:36:25",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_uint256",
+              "typeString": "uint256"
+            },
+            "typeName": {
+              "id": 16084,
+              "name": "uint256",
+              "nodeType": "ElementaryTypeName",
+              "src": "858:7:25",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            },
+            "value": null,
+            "visibility": "public"
+          },
+          {
+            "body": {
+              "id": 16119,
+              "nodeType": "Block",
+              "src": "1425:219:25",
+              "statements": [
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 16101,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "argumentTypes": null,
+                      "id": 16099,
+                      "name": "GOT",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 16073,
+                      "src": "1435:3:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_contract$_IERC20_$20386",
+                        "typeString": "contract IERC20"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "argumentTypes": null,
+                      "id": 16100,
+                      "name": "_GOT",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 16088,
+                      "src": "1441:4:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_contract$_IERC20_$20386",
+                        "typeString": "contract IERC20"
+                      }
+                    },
+                    "src": "1435:10:25",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IERC20_$20386",
+                      "typeString": "contract IERC20"
+                    }
+                  },
+                  "id": 16102,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1435:10:25"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 16105,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "argumentTypes": null,
+                      "id": 16103,
+                      "name": "HUSDGOCLPPool",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 16076,
+                      "src": "1455:13:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                        "typeString": "contract IRewardDistributionRecipient"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "argumentTypes": null,
+                      "id": 16104,
+                      "name": "_HUSDGOCLPPool",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 16090,
+                      "src": "1471:14:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                        "typeString": "contract IRewardDistributionRecipient"
+                      }
+                    },
+                    "src": "1455:30:25",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                      "typeString": "contract IRewardDistributionRecipient"
+                    }
+                  },
+                  "id": 16106,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1455:30:25"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 16109,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "argumentTypes": null,
+                      "id": 16107,
+                      "name": "HUSDGOCInitialBalance",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 16079,
+                      "src": "1495:21:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "argumentTypes": null,
+                      "id": 16108,
+                      "name": "_HUSDGOCInitialBalance",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 16092,
+                      "src": "1519:22:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "src": "1495:46:25",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "id": 16110,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1495:46:25"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 16113,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "argumentTypes": null,
+                      "id": 16111,
+                      "name": "HUSDGOTLPPool",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 16082,
+                      "src": "1551:13:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                        "typeString": "contract IRewardDistributionRecipient"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "argumentTypes": null,
+                      "id": 16112,
+                      "name": "_HUSDGOTLPPool",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 16094,
+                      "src": "1567:14:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                        "typeString": "contract IRewardDistributionRecipient"
+                      }
+                    },
+                    "src": "1551:30:25",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                      "typeString": "contract IRewardDistributionRecipient"
+                    }
+                  },
+                  "id": 16114,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1551:30:25"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 16117,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "argumentTypes": null,
+                      "id": 16115,
+                      "name": "HUSDGOTInitialBalance",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 16085,
+                      "src": "1591:21:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "argumentTypes": null,
+                      "id": 16116,
+                      "name": "_HUSDGOTInitialBalance",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 16096,
+                      "src": "1615:22:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "src": "1591:46:25",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "id": 16118,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1591:46:25"
+                }
+              ]
+            },
+            "documentation": {
+              "id": 16086,
+              "nodeType": "StructuredDocumentation",
+              "src": "901:287:25",
+              "text": " @dev 构造函数\n @param _GOT GOT地址\n @param _HUSDGOCLPPool HUSDGOCLPPool 矿池地址\n @param _HUSDGOCInitialBalance HUSDGOC 初始奖励\n @param _HUSDGOTLPPool HUSDGOTLPPool 矿池地址\n @param _HUSDGOTInitialBalance HUSDGOT 初始奖励"
+            },
+            "id": 16120,
+            "implemented": true,
+            "kind": "constructor",
+            "modifiers": [],
+            "name": "",
+            "nodeType": "FunctionDefinition",
+            "overrides": null,
+            "parameters": {
+              "id": 16097,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 16088,
+                  "mutability": "mutable",
+                  "name": "_GOT",
+                  "nodeType": "VariableDeclaration",
+                  "overrides": null,
+                  "scope": 16120,
+                  "src": "1214:11:25",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IERC20_$20386",
+                    "typeString": "contract IERC20"
+                  },
+                  "typeName": {
+                    "contractScope": null,
+                    "id": 16087,
+                    "name": "IERC20",
+                    "nodeType": "UserDefinedTypeName",
+                    "referencedDeclaration": 20386,
+                    "src": "1214:6:25",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IERC20_$20386",
+                      "typeString": "contract IERC20"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 16090,
+                  "mutability": "mutable",
+                  "name": "_HUSDGOCLPPool",
+                  "nodeType": "VariableDeclaration",
+                  "overrides": null,
+                  "scope": 16120,
+                  "src": "1235:43:25",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                    "typeString": "contract IRewardDistributionRecipient"
+                  },
+                  "typeName": {
+                    "contractScope": null,
+                    "id": 16089,
+                    "name": "IRewardDistributionRecipient",
+                    "nodeType": "UserDefinedTypeName",
+                    "referencedDeclaration": 17367,
+                    "src": "1235:28:25",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                      "typeString": "contract IRewardDistributionRecipient"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 16092,
+                  "mutability": "mutable",
+                  "name": "_HUSDGOCInitialBalance",
+                  "nodeType": "VariableDeclaration",
+                  "overrides": null,
+                  "scope": 16120,
+                  "src": "1288:30:25",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 16091,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1288:7:25",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 16094,
+                  "mutability": "mutable",
+                  "name": "_HUSDGOTLPPool",
+                  "nodeType": "VariableDeclaration",
+                  "overrides": null,
+                  "scope": 16120,
+                  "src": "1328:43:25",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                    "typeString": "contract IRewardDistributionRecipient"
+                  },
+                  "typeName": {
+                    "contractScope": null,
+                    "id": 16093,
+                    "name": "IRewardDistributionRecipient",
+                    "nodeType": "UserDefinedTypeName",
+                    "referencedDeclaration": 17367,
+                    "src": "1328:28:25",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                      "typeString": "contract IRewardDistributionRecipient"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 16096,
+                  "mutability": "mutable",
+                  "name": "_HUSDGOTInitialBalance",
+                  "nodeType": "VariableDeclaration",
+                  "overrides": null,
+                  "scope": 16120,
+                  "src": "1381:30:25",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 16095,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1381:7:25",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1204:213:25"
+            },
+            "returnParameters": {
+              "id": 16098,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1425:0:25"
+            },
+            "scope": 16184,
+            "src": "1193:451:25",
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "public"
+          },
+          {
+            "baseFunctions": [
+              16054
+            ],
+            "body": {
+              "id": 16182,
+              "nodeType": "Block",
+              "src": "1728:795:25",
+              "statements": [
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "id": 16126,
+                        "name": "once",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 16070,
+                        "src": "1759:4:25",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bool",
+                          "typeString": "bool"
+                        }
+                      },
+                      {
+                        "argumentTypes": null,
+                        "hexValue": "496e697469616c474f544469737472696275746f723a20796f752063616e6e6f742072756e20746869732066756e6374696f6e207477696365",
+                        "id": 16127,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "string",
+                        "lValueRequested": false,
+                        "nodeType": "Literal",
+                        "src": "1777:59:25",
+                        "subdenomination": null,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_stringliteral_ab8c9474521097701b1eab2c9bd2f94510b284d21945c48313da2ca937385f25",
+                          "typeString": "literal_string \"InitialGOTDistributor: you cannot run this function twice\""
+                        },
+                        "value": "InitialGOTDistributor: you cannot run this function twice"
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_bool",
+                          "typeString": "bool"
+                        },
+                        {
+                          "typeIdentifier": "t_stringliteral_ab8c9474521097701b1eab2c9bd2f94510b284d21945c48313da2ca937385f25",
+                          "typeString": "literal_string \"InitialGOTDistributor: you cannot run this function twice\""
+                        }
+                      ],
+                      "id": 16125,
+                      "name": "require",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [
+                        -18,
+                        -18
+                      ],
+                      "referencedDeclaration": -18,
+                      "src": "1738:7:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_require_pure$_t_bool_$_t_string_memory_ptr_$returns$__$",
+                        "typeString": "function (bool,string memory) pure"
+                      }
+                    },
+                    "id": 16128,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "1738:108:25",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 16129,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1738:108:25"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "arguments": [
+                          {
+                            "argumentTypes": null,
+                            "id": 16135,
+                            "name": "HUSDGOCLPPool",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 16076,
+                            "src": "1939:13:25",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                              "typeString": "contract IRewardDistributionRecipient"
+                            }
+                          }
+                        ],
+                        "expression": {
+                          "argumentTypes": [
+                            {
+                              "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                              "typeString": "contract IRewardDistributionRecipient"
+                            }
+                          ],
+                          "id": 16134,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "lValueRequested": false,
+                          "nodeType": "ElementaryTypeNameExpression",
+                          "src": "1931:7:25",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_type$_t_address_$",
+                            "typeString": "type(address)"
+                          },
+                          "typeName": {
+                            "id": 16133,
+                            "name": "address",
+                            "nodeType": "ElementaryTypeName",
+                            "src": "1931:7:25",
+                            "typeDescriptions": {
+                              "typeIdentifier": null,
+                              "typeString": null
+                            }
+                          }
+                        },
+                        "id": 16136,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "kind": "typeConversion",
+                        "lValueRequested": false,
+                        "names": [],
+                        "nodeType": "FunctionCall",
+                        "src": "1931:22:25",
+                        "tryCall": false,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      {
+                        "argumentTypes": null,
+                        "id": 16137,
+                        "name": "HUSDGOCInitialBalance",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 16079,
+                        "src": "1955:21:25",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        },
+                        {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 16130,
+                        "name": "GOT",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 16073,
+                        "src": "1918:3:25",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_contract$_IERC20_$20386",
+                          "typeString": "contract IERC20"
+                        }
+                      },
+                      "id": 16132,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "transfer",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 20335,
+                      "src": "1918:12:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_external_nonpayable$_t_address_$_t_uint256_$returns$_t_bool_$",
+                        "typeString": "function (address,uint256) external returns (bool)"
+                      }
+                    },
+                    "id": 16138,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "1918:59:25",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "id": 16139,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1918:59:25"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "id": 16143,
+                        "name": "HUSDGOCInitialBalance",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 16079,
+                        "src": "2044:21:25",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 16140,
+                        "name": "HUSDGOCLPPool",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 16076,
+                        "src": "2011:13:25",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                          "typeString": "contract IRewardDistributionRecipient"
+                        }
+                      },
+                      "id": 16142,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "notifyRewardAmount",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 17342,
+                      "src": "2011:32:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_external_nonpayable$_t_uint256_$returns$__$",
+                        "typeString": "function (uint256) external"
+                      }
+                    },
+                    "id": 16144,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "2011:55:25",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 16145,
+                  "nodeType": "ExpressionStatement",
+                  "src": "2011:55:25"
+                },
+                {
+                  "eventCall": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "arguments": [
+                          {
+                            "argumentTypes": null,
+                            "id": 16149,
+                            "name": "HUSDGOCLPPool",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 16076,
+                            "src": "2131:13:25",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                              "typeString": "contract IRewardDistributionRecipient"
+                            }
+                          }
+                        ],
+                        "expression": {
+                          "argumentTypes": [
+                            {
+                              "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                              "typeString": "contract IRewardDistributionRecipient"
+                            }
+                          ],
+                          "id": 16148,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "lValueRequested": false,
+                          "nodeType": "ElementaryTypeNameExpression",
+                          "src": "2123:7:25",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_type$_t_address_$",
+                            "typeString": "type(address)"
+                          },
+                          "typeName": {
+                            "id": 16147,
+                            "name": "address",
+                            "nodeType": "ElementaryTypeName",
+                            "src": "2123:7:25",
+                            "typeDescriptions": {
+                              "typeIdentifier": null,
+                              "typeString": null
+                            }
+                          }
+                        },
+                        "id": 16150,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "kind": "typeConversion",
+                        "lValueRequested": false,
+                        "names": [],
+                        "nodeType": "FunctionCall",
+                        "src": "2123:22:25",
+                        "tryCall": false,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      {
+                        "argumentTypes": null,
+                        "id": 16151,
+                        "name": "HUSDGOCInitialBalance",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 16079,
+                        "src": "2147:21:25",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        },
+                        {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      ],
+                      "id": 16146,
+                      "name": "Distributed",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 16066,
+                      "src": "2111:11:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_event_nonpayable$_t_address_$_t_uint256_$returns$__$",
+                        "typeString": "function (address,uint256)"
+                      }
+                    },
+                    "id": 16152,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "2111:58:25",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 16153,
+                  "nodeType": "EmitStatement",
+                  "src": "2106:63:25"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "arguments": [
+                          {
+                            "argumentTypes": null,
+                            "id": 16159,
+                            "name": "HUSDGOTLPPool",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 16082,
+                            "src": "2263:13:25",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                              "typeString": "contract IRewardDistributionRecipient"
+                            }
+                          }
+                        ],
+                        "expression": {
+                          "argumentTypes": [
+                            {
+                              "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                              "typeString": "contract IRewardDistributionRecipient"
+                            }
+                          ],
+                          "id": 16158,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "lValueRequested": false,
+                          "nodeType": "ElementaryTypeNameExpression",
+                          "src": "2255:7:25",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_type$_t_address_$",
+                            "typeString": "type(address)"
+                          },
+                          "typeName": {
+                            "id": 16157,
+                            "name": "address",
+                            "nodeType": "ElementaryTypeName",
+                            "src": "2255:7:25",
+                            "typeDescriptions": {
+                              "typeIdentifier": null,
+                              "typeString": null
+                            }
+                          }
+                        },
+                        "id": 16160,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "kind": "typeConversion",
+                        "lValueRequested": false,
+                        "names": [],
+                        "nodeType": "FunctionCall",
+                        "src": "2255:22:25",
+                        "tryCall": false,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      {
+                        "argumentTypes": null,
+                        "id": 16161,
+                        "name": "HUSDGOTInitialBalance",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 16085,
+                        "src": "2279:21:25",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        },
+                        {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 16154,
+                        "name": "GOT",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 16073,
+                        "src": "2242:3:25",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_contract$_IERC20_$20386",
+                          "typeString": "contract IERC20"
+                        }
+                      },
+                      "id": 16156,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "transfer",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 20335,
+                      "src": "2242:12:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_external_nonpayable$_t_address_$_t_uint256_$returns$_t_bool_$",
+                        "typeString": "function (address,uint256) external returns (bool)"
+                      }
+                    },
+                    "id": 16162,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "2242:59:25",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "id": 16163,
+                  "nodeType": "ExpressionStatement",
+                  "src": "2242:59:25"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "id": 16167,
+                        "name": "HUSDGOTInitialBalance",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 16085,
+                        "src": "2368:21:25",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 16164,
+                        "name": "HUSDGOTLPPool",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 16082,
+                        "src": "2335:13:25",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                          "typeString": "contract IRewardDistributionRecipient"
+                        }
+                      },
+                      "id": 16166,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "notifyRewardAmount",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 17342,
+                      "src": "2335:32:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_external_nonpayable$_t_uint256_$returns$__$",
+                        "typeString": "function (uint256) external"
+                      }
+                    },
+                    "id": 16168,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "2335:55:25",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 16169,
+                  "nodeType": "ExpressionStatement",
+                  "src": "2335:55:25"
+                },
+                {
+                  "eventCall": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "arguments": [
+                          {
+                            "argumentTypes": null,
+                            "id": 16173,
+                            "name": "HUSDGOTLPPool",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 16082,
+                            "src": "2455:13:25",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                              "typeString": "contract IRewardDistributionRecipient"
+                            }
+                          }
+                        ],
+                        "expression": {
+                          "argumentTypes": [
+                            {
+                              "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                              "typeString": "contract IRewardDistributionRecipient"
+                            }
+                          ],
+                          "id": 16172,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "lValueRequested": false,
+                          "nodeType": "ElementaryTypeNameExpression",
+                          "src": "2447:7:25",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_type$_t_address_$",
+                            "typeString": "type(address)"
+                          },
+                          "typeName": {
+                            "id": 16171,
+                            "name": "address",
+                            "nodeType": "ElementaryTypeName",
+                            "src": "2447:7:25",
+                            "typeDescriptions": {
+                              "typeIdentifier": null,
+                              "typeString": null
+                            }
+                          }
+                        },
+                        "id": 16174,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "kind": "typeConversion",
+                        "lValueRequested": false,
+                        "names": [],
+                        "nodeType": "FunctionCall",
+                        "src": "2447:22:25",
+                        "tryCall": false,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      {
+                        "argumentTypes": null,
+                        "id": 16175,
+                        "name": "HUSDGOTInitialBalance",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 16085,
+                        "src": "2471:21:25",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        },
+                        {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      ],
+                      "id": 16170,
+                      "name": "Distributed",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 16066,
+                      "src": "2435:11:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_event_nonpayable$_t_address_$_t_uint256_$returns$__$",
+                        "typeString": "function (address,uint256)"
+                      }
+                    },
+                    "id": 16176,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "2435:58:25",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 16177,
+                  "nodeType": "EmitStatement",
+                  "src": "2430:63:25"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 16180,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "argumentTypes": null,
+                      "id": 16178,
+                      "name": "once",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 16070,
+                      "src": "2504:4:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bool",
+                        "typeString": "bool"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "argumentTypes": null,
+                      "hexValue": "66616c7365",
+                      "id": 16179,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "kind": "bool",
+                      "lValueRequested": false,
+                      "nodeType": "Literal",
+                      "src": "2511:5:25",
+                      "subdenomination": null,
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bool",
+                        "typeString": "bool"
+                      },
+                      "value": "false"
+                    },
+                    "src": "2504:12:25",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "id": 16181,
+                  "nodeType": "ExpressionStatement",
+                  "src": "2504:12:25"
+                }
+              ]
+            },
+            "documentation": {
+              "id": 16121,
+              "nodeType": "StructuredDocumentation",
+              "src": "1650:35:25",
+              "text": " @dev 分发奖励"
+            },
+            "functionSelector": "e4fc6b6d",
+            "id": 16183,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "distribute",
+            "nodeType": "FunctionDefinition",
+            "overrides": {
+              "id": 16123,
+              "nodeType": "OverrideSpecifier",
+              "overrides": [],
+              "src": "1719:8:25"
+            },
+            "parameters": {
+              "id": 16122,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1709:2:25"
+            },
+            "returnParameters": {
+              "id": 16124,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1728:0:25"
+            },
+            "scope": 16184,
+            "src": "1690:833:25",
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "public"
+          }
+        ],
+        "scope": 16185,
+        "src": "289:2236:25"
+      }
+    ],
+    "src": "32:2494:25"
+  },
+  "legacyAST": {
+    "absolutePath": "/home/cui/Documents/goswap/goswap-core/contracts/distribution/InitialGOTDistributor.sol",
+    "exportedSymbols": {
+      "IDistributor": [
+        16055
+      ],
+      "InitialGOTDistributor": [
+        16184
+      ]
+    },
+    "id": 16185,
+    "license": "MIT",
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 16048,
+        "literals": [
+          "solidity",
+          "^",
+          "0.6",
+          ".0"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "32:23:25"
+      },
+      {
+        "absolutePath": "@openzeppelin/contracts/math/SafeMath.sol",
+        "file": "@openzeppelin/contracts/math/SafeMath.sol",
+        "id": 16049,
+        "nodeType": "ImportDirective",
+        "scope": 16185,
+        "sourceUnit": 19746,
+        "src": "57:51:25",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "absolutePath": "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "file": "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "id": 16050,
+        "nodeType": "ImportDirective",
+        "scope": 16185,
+        "sourceUnit": 20387,
+        "src": "109:56:25",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "absolutePath": "/home/cui/Documents/goswap/goswap-core/contracts/interfaces/IRewardDistributionRecipient.sol",
+        "file": "../interfaces/IRewardDistributionRecipient.sol",
+        "id": 16051,
+        "nodeType": "ImportDirective",
+        "scope": 16185,
+        "sourceUnit": 17368,
+        "src": "167:56:25",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "abstract": false,
+        "baseContracts": [],
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "documentation": null,
+        "fullyImplemented": false,
+        "id": 16055,
+        "linearizedBaseContracts": [
+          16055
+        ],
+        "name": "IDistributor",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "body": null,
+            "documentation": null,
+            "functionSelector": "e4fc6b6d",
+            "id": 16054,
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "distribute",
+            "nodeType": "FunctionDefinition",
+            "overrides": null,
+            "parameters": {
+              "id": 16052,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "273:2:25"
+            },
+            "returnParameters": {
+              "id": 16053,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "284:0:25"
+            },
+            "scope": 16055,
+            "src": "254:31:25",
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "scope": 16185,
+        "src": "225:62:25"
+      },
+      {
+        "abstract": false,
+        "baseContracts": [
+          {
+            "arguments": null,
+            "baseName": {
+              "contractScope": null,
+              "id": 16056,
+              "name": "IDistributor",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 16055,
+              "src": "323:12:25",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_IDistributor_$16055",
+                "typeString": "contract IDistributor"
+              }
+            },
+            "id": 16057,
+            "nodeType": "InheritanceSpecifier",
+            "src": "323:12:25"
+          }
+        ],
+        "contractDependencies": [
+          16055
+        ],
+        "contractKind": "contract",
+        "documentation": null,
+        "fullyImplemented": true,
+        "id": 16184,
+        "linearizedBaseContracts": [
+          16184,
+          16055
+        ],
+        "name": "InitialGOTDistributor",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "id": 16060,
+            "libraryName": {
+              "contractScope": null,
+              "id": 16058,
+              "name": "SafeMath",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 19745,
+              "src": "348:8:25",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_SafeMath_$19745",
+                "typeString": "library SafeMath"
+              }
+            },
+            "nodeType": "UsingForDirective",
+            "src": "342:27:25",
+            "typeName": {
+              "id": 16059,
+              "name": "uint256",
+              "nodeType": "ElementaryTypeName",
+              "src": "361:7:25",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          },
+          {
+            "anonymous": false,
+            "documentation": null,
+            "id": 16066,
+            "name": "Distributed",
+            "nodeType": "EventDefinition",
+            "parameters": {
+              "id": 16065,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 16062,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "pool",
+                  "nodeType": "VariableDeclaration",
+                  "overrides": null,
+                  "scope": 16066,
+                  "src": "393:12:25",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 16061,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "393:7:25",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 16064,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "cashAmount",
+                  "nodeType": "VariableDeclaration",
+                  "overrides": null,
+                  "scope": 16066,
+                  "src": "407:18:25",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 16063,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "407:7:25",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "392:34:25"
+            },
+            "src": "375:52:25"
+          },
+          {
+            "constant": false,
+            "documentation": {
+              "id": 16067,
+              "nodeType": "StructuredDocumentation",
+              "src": "432:30:25",
+              "text": "@notice 只能运行一次"
+            },
+            "functionSelector": "292a3f7e",
+            "id": 16070,
+            "mutability": "mutable",
+            "name": "once",
+            "nodeType": "VariableDeclaration",
+            "overrides": null,
+            "scope": 16184,
+            "src": "467:23:25",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_bool",
+              "typeString": "bool"
+            },
+            "typeName": {
+              "id": 16068,
+              "name": "bool",
+              "nodeType": "ElementaryTypeName",
+              "src": "467:4:25",
+              "typeDescriptions": {
+                "typeIdentifier": "t_bool",
+                "typeString": "bool"
+              }
+            },
+            "value": {
+              "argumentTypes": null,
+              "hexValue": "74727565",
+              "id": 16069,
+              "isConstant": false,
+              "isLValue": false,
+              "isPure": true,
+              "kind": "bool",
+              "lValueRequested": false,
+              "nodeType": "Literal",
+              "src": "486:4:25",
+              "subdenomination": null,
+              "typeDescriptions": {
+                "typeIdentifier": "t_bool",
+                "typeString": "bool"
+              },
+              "value": "true"
+            },
+            "visibility": "public"
+          },
+          {
+            "constant": false,
+            "documentation": {
+              "id": 16071,
+              "nodeType": "StructuredDocumentation",
+              "src": "497:21:25",
+              "text": "@notice GOT地址"
+            },
+            "functionSelector": "c4dd5cef",
+            "id": 16073,
+            "mutability": "mutable",
+            "name": "GOT",
+            "nodeType": "VariableDeclaration",
+            "overrides": null,
+            "scope": 16184,
+            "src": "523:17:25",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_contract$_IERC20_$20386",
+              "typeString": "contract IERC20"
+            },
+            "typeName": {
+              "contractScope": null,
+              "id": 16072,
+              "name": "IERC20",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 20386,
+              "src": "523:6:25",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_IERC20_$20386",
+                "typeString": "contract IERC20"
+              }
+            },
+            "value": null,
+            "visibility": "public"
+          },
+          {
+            "constant": false,
+            "documentation": {
+              "id": 16074,
+              "nodeType": "StructuredDocumentation",
+              "src": "546:38:25",
+              "text": "@notice HUSDGOCLPPool 矿池地址"
+            },
+            "functionSelector": "e041e36b",
+            "id": 16076,
+            "mutability": "mutable",
+            "name": "HUSDGOCLPPool",
+            "nodeType": "VariableDeclaration",
+            "overrides": null,
+            "scope": 16184,
+            "src": "589:49:25",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+              "typeString": "contract IRewardDistributionRecipient"
+            },
+            "typeName": {
+              "contractScope": null,
+              "id": 16075,
+              "name": "IRewardDistributionRecipient",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 17367,
+              "src": "589:28:25",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                "typeString": "contract IRewardDistributionRecipient"
+              }
+            },
+            "value": null,
+            "visibility": "public"
+          },
+          {
+            "constant": false,
+            "documentation": {
+              "id": 16077,
+              "nodeType": "StructuredDocumentation",
+              "src": "644:32:25",
+              "text": "@notice HUSDGOC 初始奖励"
+            },
+            "functionSelector": "5489003c",
+            "id": 16079,
+            "mutability": "mutable",
+            "name": "HUSDGOCInitialBalance",
+            "nodeType": "VariableDeclaration",
+            "overrides": null,
+            "scope": 16184,
+            "src": "681:36:25",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_uint256",
+              "typeString": "uint256"
+            },
+            "typeName": {
+              "id": 16078,
+              "name": "uint256",
+              "nodeType": "ElementaryTypeName",
+              "src": "681:7:25",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            },
+            "value": null,
+            "visibility": "public"
+          },
+          {
+            "constant": false,
+            "documentation": {
+              "id": 16080,
+              "nodeType": "StructuredDocumentation",
+              "src": "723:38:25",
+              "text": "@notice HUSDGOTLPPool 矿池地址"
+            },
+            "functionSelector": "43d42ccd",
+            "id": 16082,
+            "mutability": "mutable",
+            "name": "HUSDGOTLPPool",
+            "nodeType": "VariableDeclaration",
+            "overrides": null,
+            "scope": 16184,
+            "src": "766:49:25",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+              "typeString": "contract IRewardDistributionRecipient"
+            },
+            "typeName": {
+              "contractScope": null,
+              "id": 16081,
+              "name": "IRewardDistributionRecipient",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 17367,
+              "src": "766:28:25",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                "typeString": "contract IRewardDistributionRecipient"
+              }
+            },
+            "value": null,
+            "visibility": "public"
+          },
+          {
+            "constant": false,
+            "documentation": {
+              "id": 16083,
+              "nodeType": "StructuredDocumentation",
+              "src": "821:32:25",
+              "text": "@notice HUSDGOT 初始奖励"
+            },
+            "functionSelector": "d5204d5c",
+            "id": 16085,
+            "mutability": "mutable",
+            "name": "HUSDGOTInitialBalance",
+            "nodeType": "VariableDeclaration",
+            "overrides": null,
+            "scope": 16184,
+            "src": "858:36:25",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_uint256",
+              "typeString": "uint256"
+            },
+            "typeName": {
+              "id": 16084,
+              "name": "uint256",
+              "nodeType": "ElementaryTypeName",
+              "src": "858:7:25",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            },
+            "value": null,
+            "visibility": "public"
+          },
+          {
+            "body": {
+              "id": 16119,
+              "nodeType": "Block",
+              "src": "1425:219:25",
+              "statements": [
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 16101,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "argumentTypes": null,
+                      "id": 16099,
+                      "name": "GOT",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 16073,
+                      "src": "1435:3:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_contract$_IERC20_$20386",
+                        "typeString": "contract IERC20"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "argumentTypes": null,
+                      "id": 16100,
+                      "name": "_GOT",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 16088,
+                      "src": "1441:4:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_contract$_IERC20_$20386",
+                        "typeString": "contract IERC20"
+                      }
+                    },
+                    "src": "1435:10:25",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IERC20_$20386",
+                      "typeString": "contract IERC20"
+                    }
+                  },
+                  "id": 16102,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1435:10:25"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 16105,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "argumentTypes": null,
+                      "id": 16103,
+                      "name": "HUSDGOCLPPool",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 16076,
+                      "src": "1455:13:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                        "typeString": "contract IRewardDistributionRecipient"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "argumentTypes": null,
+                      "id": 16104,
+                      "name": "_HUSDGOCLPPool",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 16090,
+                      "src": "1471:14:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                        "typeString": "contract IRewardDistributionRecipient"
+                      }
+                    },
+                    "src": "1455:30:25",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                      "typeString": "contract IRewardDistributionRecipient"
+                    }
+                  },
+                  "id": 16106,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1455:30:25"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 16109,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "argumentTypes": null,
+                      "id": 16107,
+                      "name": "HUSDGOCInitialBalance",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 16079,
+                      "src": "1495:21:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "argumentTypes": null,
+                      "id": 16108,
+                      "name": "_HUSDGOCInitialBalance",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 16092,
+                      "src": "1519:22:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "src": "1495:46:25",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "id": 16110,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1495:46:25"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 16113,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "argumentTypes": null,
+                      "id": 16111,
+                      "name": "HUSDGOTLPPool",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 16082,
+                      "src": "1551:13:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                        "typeString": "contract IRewardDistributionRecipient"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "argumentTypes": null,
+                      "id": 16112,
+                      "name": "_HUSDGOTLPPool",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 16094,
+                      "src": "1567:14:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                        "typeString": "contract IRewardDistributionRecipient"
+                      }
+                    },
+                    "src": "1551:30:25",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                      "typeString": "contract IRewardDistributionRecipient"
+                    }
+                  },
+                  "id": 16114,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1551:30:25"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 16117,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "argumentTypes": null,
+                      "id": 16115,
+                      "name": "HUSDGOTInitialBalance",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 16085,
+                      "src": "1591:21:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "argumentTypes": null,
+                      "id": 16116,
+                      "name": "_HUSDGOTInitialBalance",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 16096,
+                      "src": "1615:22:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "src": "1591:46:25",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "id": 16118,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1591:46:25"
+                }
+              ]
+            },
+            "documentation": {
+              "id": 16086,
+              "nodeType": "StructuredDocumentation",
+              "src": "901:287:25",
+              "text": " @dev 构造函数\n @param _GOT GOT地址\n @param _HUSDGOCLPPool HUSDGOCLPPool 矿池地址\n @param _HUSDGOCInitialBalance HUSDGOC 初始奖励\n @param _HUSDGOTLPPool HUSDGOTLPPool 矿池地址\n @param _HUSDGOTInitialBalance HUSDGOT 初始奖励"
+            },
+            "id": 16120,
+            "implemented": true,
+            "kind": "constructor",
+            "modifiers": [],
+            "name": "",
+            "nodeType": "FunctionDefinition",
+            "overrides": null,
+            "parameters": {
+              "id": 16097,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 16088,
+                  "mutability": "mutable",
+                  "name": "_GOT",
+                  "nodeType": "VariableDeclaration",
+                  "overrides": null,
+                  "scope": 16120,
+                  "src": "1214:11:25",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IERC20_$20386",
+                    "typeString": "contract IERC20"
+                  },
+                  "typeName": {
+                    "contractScope": null,
+                    "id": 16087,
+                    "name": "IERC20",
+                    "nodeType": "UserDefinedTypeName",
+                    "referencedDeclaration": 20386,
+                    "src": "1214:6:25",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IERC20_$20386",
+                      "typeString": "contract IERC20"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 16090,
+                  "mutability": "mutable",
+                  "name": "_HUSDGOCLPPool",
+                  "nodeType": "VariableDeclaration",
+                  "overrides": null,
+                  "scope": 16120,
+                  "src": "1235:43:25",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                    "typeString": "contract IRewardDistributionRecipient"
+                  },
+                  "typeName": {
+                    "contractScope": null,
+                    "id": 16089,
+                    "name": "IRewardDistributionRecipient",
+                    "nodeType": "UserDefinedTypeName",
+                    "referencedDeclaration": 17367,
+                    "src": "1235:28:25",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                      "typeString": "contract IRewardDistributionRecipient"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 16092,
+                  "mutability": "mutable",
+                  "name": "_HUSDGOCInitialBalance",
+                  "nodeType": "VariableDeclaration",
+                  "overrides": null,
+                  "scope": 16120,
+                  "src": "1288:30:25",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 16091,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1288:7:25",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 16094,
+                  "mutability": "mutable",
+                  "name": "_HUSDGOTLPPool",
+                  "nodeType": "VariableDeclaration",
+                  "overrides": null,
+                  "scope": 16120,
+                  "src": "1328:43:25",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                    "typeString": "contract IRewardDistributionRecipient"
+                  },
+                  "typeName": {
+                    "contractScope": null,
+                    "id": 16093,
+                    "name": "IRewardDistributionRecipient",
+                    "nodeType": "UserDefinedTypeName",
+                    "referencedDeclaration": 17367,
+                    "src": "1328:28:25",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                      "typeString": "contract IRewardDistributionRecipient"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 16096,
+                  "mutability": "mutable",
+                  "name": "_HUSDGOTInitialBalance",
+                  "nodeType": "VariableDeclaration",
+                  "overrides": null,
+                  "scope": 16120,
+                  "src": "1381:30:25",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 16095,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1381:7:25",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1204:213:25"
+            },
+            "returnParameters": {
+              "id": 16098,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1425:0:25"
+            },
+            "scope": 16184,
+            "src": "1193:451:25",
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "public"
+          },
+          {
+            "baseFunctions": [
+              16054
+            ],
+            "body": {
+              "id": 16182,
+              "nodeType": "Block",
+              "src": "1728:795:25",
+              "statements": [
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "id": 16126,
+                        "name": "once",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 16070,
+                        "src": "1759:4:25",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bool",
+                          "typeString": "bool"
+                        }
+                      },
+                      {
+                        "argumentTypes": null,
+                        "hexValue": "496e697469616c474f544469737472696275746f723a20796f752063616e6e6f742072756e20746869732066756e6374696f6e207477696365",
+                        "id": 16127,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "string",
+                        "lValueRequested": false,
+                        "nodeType": "Literal",
+                        "src": "1777:59:25",
+                        "subdenomination": null,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_stringliteral_ab8c9474521097701b1eab2c9bd2f94510b284d21945c48313da2ca937385f25",
+                          "typeString": "literal_string \"InitialGOTDistributor: you cannot run this function twice\""
+                        },
+                        "value": "InitialGOTDistributor: you cannot run this function twice"
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_bool",
+                          "typeString": "bool"
+                        },
+                        {
+                          "typeIdentifier": "t_stringliteral_ab8c9474521097701b1eab2c9bd2f94510b284d21945c48313da2ca937385f25",
+                          "typeString": "literal_string \"InitialGOTDistributor: you cannot run this function twice\""
+                        }
+                      ],
+                      "id": 16125,
+                      "name": "require",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [
+                        -18,
+                        -18
+                      ],
+                      "referencedDeclaration": -18,
+                      "src": "1738:7:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_require_pure$_t_bool_$_t_string_memory_ptr_$returns$__$",
+                        "typeString": "function (bool,string memory) pure"
+                      }
+                    },
+                    "id": 16128,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "1738:108:25",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 16129,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1738:108:25"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "arguments": [
+                          {
+                            "argumentTypes": null,
+                            "id": 16135,
+                            "name": "HUSDGOCLPPool",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 16076,
+                            "src": "1939:13:25",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                              "typeString": "contract IRewardDistributionRecipient"
+                            }
+                          }
+                        ],
+                        "expression": {
+                          "argumentTypes": [
+                            {
+                              "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                              "typeString": "contract IRewardDistributionRecipient"
+                            }
+                          ],
+                          "id": 16134,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "lValueRequested": false,
+                          "nodeType": "ElementaryTypeNameExpression",
+                          "src": "1931:7:25",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_type$_t_address_$",
+                            "typeString": "type(address)"
+                          },
+                          "typeName": {
+                            "id": 16133,
+                            "name": "address",
+                            "nodeType": "ElementaryTypeName",
+                            "src": "1931:7:25",
+                            "typeDescriptions": {
+                              "typeIdentifier": null,
+                              "typeString": null
+                            }
+                          }
+                        },
+                        "id": 16136,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "kind": "typeConversion",
+                        "lValueRequested": false,
+                        "names": [],
+                        "nodeType": "FunctionCall",
+                        "src": "1931:22:25",
+                        "tryCall": false,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      {
+                        "argumentTypes": null,
+                        "id": 16137,
+                        "name": "HUSDGOCInitialBalance",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 16079,
+                        "src": "1955:21:25",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        },
+                        {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 16130,
+                        "name": "GOT",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 16073,
+                        "src": "1918:3:25",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_contract$_IERC20_$20386",
+                          "typeString": "contract IERC20"
+                        }
+                      },
+                      "id": 16132,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "transfer",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 20335,
+                      "src": "1918:12:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_external_nonpayable$_t_address_$_t_uint256_$returns$_t_bool_$",
+                        "typeString": "function (address,uint256) external returns (bool)"
+                      }
+                    },
+                    "id": 16138,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "1918:59:25",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "id": 16139,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1918:59:25"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "id": 16143,
+                        "name": "HUSDGOCInitialBalance",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 16079,
+                        "src": "2044:21:25",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 16140,
+                        "name": "HUSDGOCLPPool",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 16076,
+                        "src": "2011:13:25",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                          "typeString": "contract IRewardDistributionRecipient"
+                        }
+                      },
+                      "id": 16142,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "notifyRewardAmount",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 17342,
+                      "src": "2011:32:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_external_nonpayable$_t_uint256_$returns$__$",
+                        "typeString": "function (uint256) external"
+                      }
+                    },
+                    "id": 16144,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "2011:55:25",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 16145,
+                  "nodeType": "ExpressionStatement",
+                  "src": "2011:55:25"
+                },
+                {
+                  "eventCall": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "arguments": [
+                          {
+                            "argumentTypes": null,
+                            "id": 16149,
+                            "name": "HUSDGOCLPPool",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 16076,
+                            "src": "2131:13:25",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                              "typeString": "contract IRewardDistributionRecipient"
+                            }
+                          }
+                        ],
+                        "expression": {
+                          "argumentTypes": [
+                            {
+                              "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                              "typeString": "contract IRewardDistributionRecipient"
+                            }
+                          ],
+                          "id": 16148,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "lValueRequested": false,
+                          "nodeType": "ElementaryTypeNameExpression",
+                          "src": "2123:7:25",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_type$_t_address_$",
+                            "typeString": "type(address)"
+                          },
+                          "typeName": {
+                            "id": 16147,
+                            "name": "address",
+                            "nodeType": "ElementaryTypeName",
+                            "src": "2123:7:25",
+                            "typeDescriptions": {
+                              "typeIdentifier": null,
+                              "typeString": null
+                            }
+                          }
+                        },
+                        "id": 16150,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "kind": "typeConversion",
+                        "lValueRequested": false,
+                        "names": [],
+                        "nodeType": "FunctionCall",
+                        "src": "2123:22:25",
+                        "tryCall": false,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      {
+                        "argumentTypes": null,
+                        "id": 16151,
+                        "name": "HUSDGOCInitialBalance",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 16079,
+                        "src": "2147:21:25",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        },
+                        {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      ],
+                      "id": 16146,
+                      "name": "Distributed",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 16066,
+                      "src": "2111:11:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_event_nonpayable$_t_address_$_t_uint256_$returns$__$",
+                        "typeString": "function (address,uint256)"
+                      }
+                    },
+                    "id": 16152,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "2111:58:25",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 16153,
+                  "nodeType": "EmitStatement",
+                  "src": "2106:63:25"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "arguments": [
+                          {
+                            "argumentTypes": null,
+                            "id": 16159,
+                            "name": "HUSDGOTLPPool",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 16082,
+                            "src": "2263:13:25",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                              "typeString": "contract IRewardDistributionRecipient"
+                            }
+                          }
+                        ],
+                        "expression": {
+                          "argumentTypes": [
+                            {
+                              "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                              "typeString": "contract IRewardDistributionRecipient"
+                            }
+                          ],
+                          "id": 16158,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "lValueRequested": false,
+                          "nodeType": "ElementaryTypeNameExpression",
+                          "src": "2255:7:25",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_type$_t_address_$",
+                            "typeString": "type(address)"
+                          },
+                          "typeName": {
+                            "id": 16157,
+                            "name": "address",
+                            "nodeType": "ElementaryTypeName",
+                            "src": "2255:7:25",
+                            "typeDescriptions": {
+                              "typeIdentifier": null,
+                              "typeString": null
+                            }
+                          }
+                        },
+                        "id": 16160,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "kind": "typeConversion",
+                        "lValueRequested": false,
+                        "names": [],
+                        "nodeType": "FunctionCall",
+                        "src": "2255:22:25",
+                        "tryCall": false,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      {
+                        "argumentTypes": null,
+                        "id": 16161,
+                        "name": "HUSDGOTInitialBalance",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 16085,
+                        "src": "2279:21:25",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        },
+                        {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 16154,
+                        "name": "GOT",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 16073,
+                        "src": "2242:3:25",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_contract$_IERC20_$20386",
+                          "typeString": "contract IERC20"
+                        }
+                      },
+                      "id": 16156,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "transfer",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 20335,
+                      "src": "2242:12:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_external_nonpayable$_t_address_$_t_uint256_$returns$_t_bool_$",
+                        "typeString": "function (address,uint256) external returns (bool)"
+                      }
+                    },
+                    "id": 16162,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "2242:59:25",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "id": 16163,
+                  "nodeType": "ExpressionStatement",
+                  "src": "2242:59:25"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "id": 16167,
+                        "name": "HUSDGOTInitialBalance",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 16085,
+                        "src": "2368:21:25",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 16164,
+                        "name": "HUSDGOTLPPool",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 16082,
+                        "src": "2335:13:25",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                          "typeString": "contract IRewardDistributionRecipient"
+                        }
+                      },
+                      "id": 16166,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "notifyRewardAmount",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 17342,
+                      "src": "2335:32:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_external_nonpayable$_t_uint256_$returns$__$",
+                        "typeString": "function (uint256) external"
+                      }
+                    },
+                    "id": 16168,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "2335:55:25",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 16169,
+                  "nodeType": "ExpressionStatement",
+                  "src": "2335:55:25"
+                },
+                {
+                  "eventCall": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "arguments": [
+                          {
+                            "argumentTypes": null,
+                            "id": 16173,
+                            "name": "HUSDGOTLPPool",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 16082,
+                            "src": "2455:13:25",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                              "typeString": "contract IRewardDistributionRecipient"
+                            }
+                          }
+                        ],
+                        "expression": {
+                          "argumentTypes": [
+                            {
+                              "typeIdentifier": "t_contract$_IRewardDistributionRecipient_$17367",
+                              "typeString": "contract IRewardDistributionRecipient"
+                            }
+                          ],
+                          "id": 16172,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "lValueRequested": false,
+                          "nodeType": "ElementaryTypeNameExpression",
+                          "src": "2447:7:25",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_type$_t_address_$",
+                            "typeString": "type(address)"
+                          },
+                          "typeName": {
+                            "id": 16171,
+                            "name": "address",
+                            "nodeType": "ElementaryTypeName",
+                            "src": "2447:7:25",
+                            "typeDescriptions": {
+                              "typeIdentifier": null,
+                              "typeString": null
+                            }
+                          }
+                        },
+                        "id": 16174,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "kind": "typeConversion",
+                        "lValueRequested": false,
+                        "names": [],
+                        "nodeType": "FunctionCall",
+                        "src": "2447:22:25",
+                        "tryCall": false,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      {
+                        "argumentTypes": null,
+                        "id": 16175,
+                        "name": "HUSDGOTInitialBalance",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 16085,
+                        "src": "2471:21:25",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        },
+                        {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      ],
+                      "id": 16170,
+                      "name": "Distributed",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 16066,
+                      "src": "2435:11:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_event_nonpayable$_t_address_$_t_uint256_$returns$__$",
+                        "typeString": "function (address,uint256)"
+                      }
+                    },
+                    "id": 16176,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "2435:58:25",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 16177,
+                  "nodeType": "EmitStatement",
+                  "src": "2430:63:25"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 16180,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "argumentTypes": null,
+                      "id": 16178,
+                      "name": "once",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 16070,
+                      "src": "2504:4:25",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bool",
+                        "typeString": "bool"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "argumentTypes": null,
+                      "hexValue": "66616c7365",
+                      "id": 16179,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "kind": "bool",
+                      "lValueRequested": false,
+                      "nodeType": "Literal",
+                      "src": "2511:5:25",
+                      "subdenomination": null,
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bool",
+                        "typeString": "bool"
+                      },
+                      "value": "false"
+                    },
+                    "src": "2504:12:25",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "id": 16181,
+                  "nodeType": "ExpressionStatement",
+                  "src": "2504:12:25"
+                }
+              ]
+            },
+            "documentation": {
+              "id": 16121,
+              "nodeType": "StructuredDocumentation",
+              "src": "1650:35:25",
+              "text": " @dev 分发奖励"
+            },
+            "functionSelector": "e4fc6b6d",
+            "id": 16183,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "distribute",
+            "nodeType": "FunctionDefinition",
+            "overrides": {
+              "id": 16123,
+              "nodeType": "OverrideSpecifier",
+              "overrides": [],
+              "src": "1719:8:25"
+            },
+            "parameters": {
+              "id": 16122,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1709:2:25"
+            },
+            "returnParameters": {
+              "id": 16124,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1728:0:25"
+            },
+            "scope": 16184,
+            "src": "1690:833:25",
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "public"
+          }
+        ],
+        "scope": 16185,
+        "src": "289:2236:25"
+      }
+    ],
+    "src": "32:2494:25"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.6.12+commit.27d51765.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "3.3.2",
+  "updatedAt": "2021-01-18T03:20:28.689Z",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  }
+}
