@@ -133,15 +133,15 @@ contract GoSwapGovernance is ERC20("GoSwap Governance", "GOV"), AdminRole {
         // 确认签署人地址 != 0地址
         require(
             signatory != address(0),
-            "SUSHI::delegateBySig: invalid signature"
+            "GoSwap::delegateBySig: invalid signature"
         );
         // 确认 nonce值 == nonce值映射[签署人]++
         require(
             nonce == nonces[signatory]++,
-            "SUSHI::delegateBySig: invalid nonce"
+            "GoSwap::delegateBySig: invalid nonce"
         );
         // 确认 当前时间戳 <= 过期时间
-        require(now <= expiry, "SUSHI::delegateBySig: signature expired");
+        require(now <= expiry, "GoSwap::delegateBySig: signature expired");
         // 返回更换委托人
         return _delegate(signatory, delegatee);
     }
@@ -177,7 +177,7 @@ contract GoSwapGovernance is ERC20("GoSwap Governance", "GOV"), AdminRole {
         // 确认 区块号 < 当前区块号
         require(
             blockNumber < block.number,
-            "SUSHI::getPriorVotes: not yet determined"
+            "GoSwap::getPriorVotes: not yet determined"
         );
 
         // 检查点数 = 每个帐户的检查点数映射[账户地址]
@@ -238,8 +238,8 @@ contract GoSwapGovernance is ERC20("GoSwap Governance", "GOV"), AdminRole {
     function _delegate(address delegator, address delegatee) internal {
         // 被委托人的当前委托人
         address currentDelegate = _delegates[delegator];
-        // 获取基础SUSHI的余额（未缩放）
-        uint256 delegatorBalance = balanceOf(delegator); // balance of underlying SUSHIs (not scaled);
+        // 获取基础GoSwap的余额（未缩放）
+        uint256 delegatorBalance = balanceOf(delegator); // balance of underlying GoSwaps (not scaled);
         // 修改被委托人的委托人为新委托人
         _delegates[delegator] = delegatee;
 
@@ -312,7 +312,7 @@ contract GoSwapGovernance is ERC20("GoSwap Governance", "GOV"), AdminRole {
         // 区块号 = 限制在32位2进制之内(当前区块号)
         uint32 blockNumber = safe32(
             block.number,
-            "SUSHI::_writeCheckpoint: block number exceeds 32 bits"
+            "GoSwap::_writeCheckpoint: block number exceeds 32 bits"
         );
         // 如果 检查点数 > 0 && 检查点映射[委托人][检查点数 - 1(最后一个,索引从0开始,检查点数从1开始)].from块号 == 当前区块号
         if (
@@ -353,7 +353,7 @@ contract GoSwapGovernance is ERC20("GoSwap Governance", "GOV"), AdminRole {
     /**
      * @dev 获取链id
      */
-    function getChainId() internal pure returns (uint256) {
+    function getChainId() public pure returns (uint256) {
         // 定义chainId变量
         uint256 chainId;
         // 内联汇编取出chainId
