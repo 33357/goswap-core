@@ -91,7 +91,7 @@ interface IGoSwapPair {
         view
         returns (uint256 _dummy0, uint256 _dummy1);
 
-    function balanceOfIndex(uint256 tokenIndex)
+    function balanceOfIndex(uint8 tokenIndex)
         external
         view
         returns (uint256 balance);
